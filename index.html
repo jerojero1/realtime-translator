@@ -1,0 +1,1130 @@
+<!DOCTYPE html>
+<html lang="ja" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VoiceTranscribe - リアルタイム多言語音声翻訳 & 文字起こし</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            }
+          },
+          animation: {
+            'pulse-fast': 'pulse 1s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    /* Custom Scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+    ::-webkit-scrollbar-thumb { background: rgba(79, 70, 229, 0.4); border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(79, 70, 229, 0.7); }
+  </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col font-sans selection:bg-indigo-500/30 selection:text-indigo-200">
+
+  <!-- Header Bar -->
+  <header class="border-b border-slate-800/80 bg-slate-900/80 backdrop-blur sticky top-0 z-40">
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-500 flex items-center justify-center shadow-lg shadow-indigo-500/25">
+          <i class="fa-solid fa-language text-white text-lg"></i>
+        </div>
+        <div>
+          <h1 class="text-base sm:text-lg font-bold tracking-tight text-white flex items-center gap-2">
+            VoiceTranscribe
+            <button id="quickSwapLangBtn" class="text-xs px-2.5 py-0.5 rounded-full bg-indigo-500/20 hover:bg-indigo-500/40 text-indigo-300 font-medium border border-indigo-500/30 flex items-center gap-1.5 transition cursor-pointer" title="発話言語と翻訳言語を反転">
+              <span id="badgeSrcLang">EN</span>
+              <i class="fa-solid fa-arrow-right-arrow-left text-[10px] text-indigo-400"></i>
+              <span id="badgeTgtLang">JA</span>
+            </button>
+          </h1>
+          <p class="text-[11px] text-slate-400 hidden sm:block">日・英・韓 リアルタイム音声認識 & AI同時通訳</p>
+        </div>
+      </div>
+
+      <!-- Action badges and toggles -->
+      <div class="flex items-center gap-2 sm:gap-3">
+        <!-- Auto Speak (TTS) Toggle Button -->
+        <button id="toggleAutoSpeakBtn" class="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-700 bg-slate-800/80 text-slate-300 hover:text-white hover:border-slate-600 transition" title="翻訳完了時に自動で音声読み上げ">
+          <i class="fa-solid fa-volume-xmark text-slate-400 text-xs" id="autoSpeakIcon"></i>
+          <span class="hidden md:inline text-slate-400">自動読上:</span>
+          <span id="autoSpeakText" class="font-semibold text-slate-400">OFF</span>
+        </button>
+
+        <!-- Status indicator -->
+        <div id="statusBadge" class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-xs font-medium text-slate-300">
+          <span id="statusDot" class="w-2 h-2 rounded-full bg-slate-500"></span>
+          <span id="statusText">停止中</span>
+        </div>
+
+        <!-- Help Guide Button -->
+        <button id="openHelpBtn" class="p-2 rounded-lg bg-slate-800/80 border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700 transition" title="PCローカル実行ガイド">
+          <i class="fa-regular fa-circle-question text-sm"></i>
+        </button>
+
+        <!-- Settings Button -->
+        <button id="openSettingsBtn" class="p-2 rounded-lg bg-slate-800/80 border border-slate-700 text-slate-300 hover:text-white hover:bg-slate-700 transition" title="設定を開く">
+          <i class="fa-solid fa-gear text-sm"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <main class="max-w-6xl mx-auto px-4 sm:px-6 py-6 flex-1 flex flex-col gap-6 w-full">
+    
+    <!-- Browser Compatibility Notice -->
+    <div id="browserNotice" class="hidden p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs sm:text-sm flex items-start gap-3">
+      <i class="fa-solid fa-triangle-exclamation text-amber-400 mt-0.5 text-base"></i>
+      <div>
+        <p class="font-semibold mb-1">Web Speech API に対応していません</p>
+        <p class="text-amber-300/80 text-xs">Google Chrome または Microsoft Edge での利用をお勧めします。デモ音声ボタンで翻訳機能のみをお試しいただくことも可能です。</p>
+      </div>
+    </div>
+
+    <!-- Live Recording / Input Card -->
+    <section class="rounded-2xl bg-gradient-to-b from-slate-900/90 to-slate-900/50 border border-slate-800 p-5 sm:p-6 shadow-2xl backdrop-blur relative overflow-hidden">
+      <div class="absolute -top-24 -right-24 w-72 h-72 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none"></div>
+
+      <!-- Visualizer & Controls Bar -->
+      <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+        <div class="flex items-center gap-3">
+          <div class="flex items-end gap-1 h-6 w-16" id="audioWaveVisualizer">
+            <span class="w-1.5 rounded-full bg-indigo-500/30 h-2 transition-all duration-75"></span>
+            <span class="w-1.5 rounded-full bg-indigo-500/30 h-3 transition-all duration-75"></span>
+            <span class="w-1.5 rounded-full bg-indigo-500/30 h-1.5 transition-all duration-75"></span>
+            <span class="w-1.5 rounded-full bg-indigo-500/30 h-4 transition-all duration-75"></span>
+            <span class="w-1.5 rounded-full bg-indigo-500/30 h-2.5 transition-all duration-75"></span>
+          </div>
+          <span class="text-xs font-medium text-slate-400" id="liveIndicatorLabel">マイクは停止しています</span>
+        </div>
+
+        <div class="flex items-center gap-2 flex-wrap justify-end">
+          <!-- 3-Language Selector Bar -->
+          <div class="flex items-center bg-slate-950/80 p-1 rounded-xl border border-slate-700/70 gap-1.5 text-xs">
+            <div class="flex items-center gap-1 pl-1">
+              <span class="text-[10px] uppercase text-slate-400 font-semibold tracking-wider">発話:</span>
+              <select id="sourceLangSelect" class="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-slate-200 focus:outline-none focus:border-indigo-500 cursor-pointer text-xs font-medium">
+                <option value="en">🇺🇸 英語</option>
+                <option value="ja">🇯🇵 日本語</option>
+                <option value="ko">🇰🇷 韓国語</option>
+              </select>
+            </div>
+
+            <button id="swapLanguagesBtn" class="p-1.5 text-slate-400 hover:text-white hover:bg-slate-800 rounded-lg transition" title="言語を反転">
+              <i class="fa-solid fa-right-left text-xs"></i>
+            </button>
+
+            <div class="flex items-center gap-1 pr-1">
+              <span class="text-[10px] uppercase text-slate-400 font-semibold tracking-wider">翻訳:</span>
+              <select id="targetLangSelect" class="bg-slate-800 border border-slate-700 rounded-lg px-2 py-1 text-slate-200 focus:outline-none focus:border-indigo-500 cursor-pointer text-xs font-medium">
+                <option value="ja">🇯🇵 日本語</option>
+                <option value="en">🇺🇸 英語</option>
+                <option value="ko">🇰🇷 韓国語</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Dialect selection (Visible when English is input) -->
+          <select id="dialectSelect" class="bg-slate-800 border border-slate-700 text-xs rounded-lg px-2.5 py-1.5 text-slate-300 focus:outline-none focus:border-indigo-500">
+            <option value="en-US">英語 (米国 / en-US)</option>
+            <option value="en-GB">英語 (英国 / en-GB)</option>
+            <option value="en-AU">英語 (豪州 / en-AU)</option>
+            <option value="en-IN">英語 (インド / en-IN)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Live Speech & Immediate Translation Preview -->
+      <div class="min-h-[110px] rounded-xl bg-slate-950/70 border border-slate-800/80 p-4 flex flex-col justify-center relative">
+        <div class="text-xs font-semibold text-indigo-400 uppercase tracking-wider mb-1 flex items-center gap-1.5">
+          <i class="fa-solid fa-waveform"></i> <span id="liveInputHeading">リアルタイム発話認識中 (Live Input)</span>
+        </div>
+        <p id="interimText" class="text-base sm:text-lg text-slate-200 font-medium italic min-h-[1.75rem] break-words">
+          マイクボタンを押して英語で話してください...
+        </p>
+        
+        <!-- Immediate Translation Preview -->
+        <div class="mt-2.5 pt-2.5 border-t border-slate-800/80 flex items-start gap-2">
+          <span id="speedTranslateLabel" class="text-[11px] font-semibold text-violet-400 uppercase tracking-wider bg-violet-500/10 px-1.5 py-0.5 rounded border border-violet-500/20 shrink-0">速報訳</span>
+          <p id="liveTranslatingText" class="text-sm text-violet-200/90 transition-opacity min-h-[1.25rem]">
+            ―
+          </p>
+        </div>
+      </div>
+
+      <!-- Controls Row -->
+      <div class="mt-5 flex flex-wrap items-center justify-between gap-4">
+        <div class="flex items-center gap-3">
+          <!-- Main Toggle Button -->
+          <button id="toggleRecordBtn" class="flex items-center gap-2.5 px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold shadow-lg shadow-indigo-600/30 transition-all active:scale-95">
+            <i class="fa-solid fa-microphone text-lg" id="micBtnIcon"></i>
+            <span id="micBtnText">リスニング開始</span>
+          </button>
+
+          <!-- Simulation / Demo Speech Button -->
+          <button id="demoSpeechBtn" class="px-4 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 text-xs font-medium transition flex items-center gap-2" title="マイクなしでデモ音声をテスト">
+            <i class="fa-solid fa-circle-play text-indigo-400"></i>
+            <span>デモ音声で試す</span>
+          </button>
+        </div>
+
+        <!-- View mode toggles -->
+        <div class="flex items-center bg-slate-950/70 p-1 rounded-xl border border-slate-800">
+          <button data-view="both" class="view-mode-btn active px-3 py-1.5 rounded-lg text-xs font-medium text-white bg-indigo-600 transition">両方表示</button>
+          <button data-view="target" id="viewTargetBtn" class="view-mode-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 transition">訳文のみ</button>
+          <button data-view="source" id="viewSourceBtn" class="view-mode-btn px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-slate-200 transition">原文のみ</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Transcript History Section (Newest at top) -->
+    <section class="flex-1 flex flex-col">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+        <div class="flex items-center gap-2">
+          <h2 class="text-base font-semibold text-white">翻訳履歴・字幕ログ</h2>
+          <span id="transcriptCountBadge" class="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">0件</span>
+          <span class="text-[11px] text-indigo-400 bg-indigo-500/10 px-2 py-0.5 rounded border border-indigo-500/20 ml-1">最新順（一番上が最新）</span>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <button id="copyAllBtn" class="px-2.5 py-1.5 rounded-lg text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition flex items-center gap-1.5" title="すべての履歴をコピー">
+            <i class="fa-regular fa-copy"></i>
+            <span>全コピー</span>
+          </button>
+          <button id="exportBtn" class="px-2.5 py-1.5 rounded-lg text-xs bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700 transition flex items-center gap-1.5" title="テキストファイルとして保存">
+            <i class="fa-solid fa-download"></i>
+            <span>保存</span>
+          </button>
+          <button id="clearTranscriptsBtn" class="px-2.5 py-1.5 rounded-lg text-xs bg-slate-800 hover:bg-rose-950/40 text-slate-400 hover:text-rose-300 border border-slate-700 hover:border-rose-800/50 transition flex items-center gap-1.5" title="履歴をクリア">
+            <i class="fa-solid fa-trash-can"></i>
+            <span>消去</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Transcript Cards Container -->
+      <div id="transcriptsContainer" class="flex flex-col gap-3 min-h-[220px]">
+        <!-- Empty State Placeholder -->
+        <div id="emptyState" class="flex flex-col items-center justify-center py-16 text-center text-slate-500">
+          <div class="w-14 h-14 rounded-2xl bg-slate-900 border border-slate-800 flex items-center justify-center mb-3">
+            <i class="fa-solid fa-microphone-lines text-2xl text-slate-600"></i>
+          </div>
+          <p class="text-sm font-medium text-slate-400">文字起こし・翻訳の履歴がありません</p>
+          <p class="text-xs text-slate-500 mt-1 max-w-sm">
+            「リスニング開始」を押して話しかけるか、「デモ音声で試す」をクリックして動作を確認してください。
+          </p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Settings Modal -->
+  <div id="settingsModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl">
+      <div class="flex items-center justify-between pb-4 border-b border-slate-800">
+        <h3 class="text-base font-semibold text-white flex items-center gap-2">
+          <i class="fa-solid fa-sliders text-indigo-400"></i> 設定
+        </h3>
+        <button id="closeSettingsBtn" class="p-1 rounded text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="py-4 space-y-4 text-xs">
+        <div>
+          <label class="block text-slate-300 font-medium mb-1.5">Gemini API キー (任意)</label>
+          <input type="password" id="customApiKeyInput" placeholder="AIzaSy... (ローカル保存時に入力)" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500">
+          <p class="text-[11px] text-slate-400 mt-1">
+            PC上にHTMLを保存して動かす場合は Google AI Studio の無料APIキーを入力してください。ブラウザ内に安全に保存されます。
+          </p>
+        </div>
+
+        <div>
+          <label class="block text-slate-300 font-medium mb-1.5">翻訳トーン (スタイル)</label>
+          <select id="translationToneSelect" class="w-full bg-slate-950 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500">
+            <option value="natural">自然な会話調 (日常会話・通常ミーティング)</option>
+            <option value="business">丁寧・ビジネス調 (学会・商談・公式発表)</option>
+            <option value="casual">カジュアル・フランク (友人同士の会話)</option>
+            <option value="compact">字幕要約調 (短く要点を伝える)</option>
+          </select>
+        </div>
+
+        <div>
+          <div class="flex justify-between items-center mb-1.5">
+            <label class="text-slate-300 font-medium">音声読み上げ速度</label>
+            <span id="speechRateVal" class="text-indigo-400 font-mono">1.0x</span>
+          </div>
+          <input type="range" id="speechRateInput" min="0.7" max="1.5" step="0.1" value="1.0" class="w-full accent-indigo-600 cursor-pointer">
+        </div>
+      </div>
+
+      <div class="pt-4 border-t border-slate-800 flex justify-end gap-2">
+        <button id="saveSettingsBtn" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-xs transition">
+          保存して閉じる
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Local PC Run Guide Modal -->
+  <div id="helpModal" class="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-lg w-full p-6 shadow-2xl max-h-[90vh] overflow-y-auto">
+      <div class="flex items-center justify-between pb-3 border-b border-slate-800 mb-4">
+        <h3 class="text-base font-semibold text-white flex items-center gap-2">
+          <i class="fa-solid fa-laptop-code text-indigo-400"></i> PC保存（ローカル）での動かし方
+        </h3>
+        <button id="closeHelpBtn" class="p-1 rounded text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark text-lg"></i>
+        </button>
+      </div>
+
+      <div class="space-y-4 text-xs text-slate-300 leading-relaxed">
+        <div class="p-3 bg-indigo-500/10 border border-indigo-500/20 rounded-xl">
+          <p class="font-semibold text-indigo-300 mb-1">【要点】ブラウザのマイク制限について</p>
+          <p class="text-slate-300">
+            ブラウザのセキュリティ仕様により、ファイルを直接ダブルクリック（<code class="text-indigo-300 bg-slate-950 px-1 py-0.5 rounded">file:///</code>）で開くとマイクがブロックされる場合があります。<br>
+            ローカルサーバー経由（<code class="text-indigo-300 bg-slate-950 px-1 py-0.5 rounded">localhost</code>）で開くと確実にマイクが利用できます。
+          </p>
+        </div>
+
+        <div>
+          <p class="font-semibold text-white mb-1.5">1. おすすめの起動方法 (VS Code)</p>
+          <p class="text-slate-400 mb-1">VS Codeの拡張機能「Live Server」をインストールし、右クリックから「Open with Live Server」で起動してください。</p>
+        </div>
+
+        <div>
+          <p class="font-semibold text-white mb-1.5">2. コマンドラインでの起動 (Python)</p>
+          <p class="text-slate-400 mb-1">HTMLファイルのあるフォルダでターミナルを開き、以下を実行してブラウザで <code class="text-indigo-300 bg-slate-950 px-1 py-0.5 rounded">http://localhost:8000</code> を開きます：</p>
+          <pre class="bg-slate-950 p-2.5 rounded-lg border border-slate-800 text-indigo-300 font-mono text-[11px] overflow-x-auto">python -m http.server 8000</pre>
+        </div>
+
+        <div>
+          <p class="font-semibold text-white mb-1.5">3. 無料のGemini APIキーの取得方法</p>
+          <p class="text-slate-400">
+            <a href="https://aistudio.google.com/" target="_blank" rel="noopener noreferrer" class="text-indigo-400 underline hover:text-indigo-300">Google AI Studio</a> にアクセスし、Googleアカウントでログインして「Get API key」をクリックすると無料でAPIキーが発行されます（クレジットカード登録不要）。取得したキーを設定画面（⚙️）に貼り付けてください。
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-5 pt-3 border-t border-slate-800 flex justify-end">
+        <button id="okHelpBtn" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-white font-medium text-xs transition">
+          閉じる
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Message -->
+  <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 pointer-events-none transition-all duration-300 flex items-center gap-2 px-4 py-3 rounded-xl bg-slate-800 border border-slate-700 text-slate-200 text-xs shadow-2xl">
+    <i class="fa-solid fa-circle-check text-indigo-400" id="toastIcon"></i>
+    <span id="toastMsg">通知メッセージ</span>
+  </div>
+
+  <script>
+    // State management
+    let recognition = null;
+    let isListening = false;
+    let sourceLang = 'en'; // 'en' | 'ja' | 'ko'
+    let targetLang = 'ja'; // 'en' | 'ja' | 'ko'
+    let transcripts = [];
+    let activeViewMode = 'both'; // 'both' | 'target' | 'source'
+    let currentTone = 'natural';
+    let apiKey = ''; // Populated from localStorage or blank
+    let audioContext = null;
+    let analyser = null;
+    let microphoneStream = null;
+    let visualizerAnimationId = null;
+
+    let autoSpeakEnabled = false;
+    let speechRate = 1.0;
+    let isSpeaking = false;
+
+    const LANG_LABELS = {
+      en: '英語',
+      ja: '日本語',
+      ko: '韓国語'
+    };
+
+    const LANG_CODES = {
+      en: 'EN',
+      ja: 'JA',
+      ko: 'KO'
+    };
+
+    // DOM Elements
+    const toggleRecordBtn = document.getElementById('toggleRecordBtn');
+    const micBtnIcon = document.getElementById('micBtnIcon');
+    const micBtnText = document.getElementById('micBtnText');
+    const statusDot = document.getElementById('statusDot');
+    const statusText = document.getElementById('statusText');
+    const statusBadge = document.getElementById('statusBadge');
+    const interimText = document.getElementById('interimText');
+    const liveTranslatingText = document.getElementById('liveTranslatingText');
+    const transcriptsContainer = document.getElementById('transcriptsContainer');
+    const emptyState = document.getElementById('emptyState');
+    const transcriptCountBadge = document.getElementById('transcriptCountBadge');
+    const copyAllBtn = document.getElementById('copyAllBtn');
+    const exportBtn = document.getElementById('exportBtn');
+    const clearTranscriptsBtn = document.getElementById('clearTranscriptsBtn');
+    const demoSpeechBtn = document.getElementById('demoSpeechBtn');
+    const dialectSelect = document.getElementById('dialectSelect');
+    const sourceLangSelect = document.getElementById('sourceLangSelect');
+    const targetLangSelect = document.getElementById('targetLangSelect');
+    const swapLanguagesBtn = document.getElementById('swapLanguagesBtn');
+    const quickSwapLangBtn = document.getElementById('quickSwapLangBtn');
+    const badgeSrcLang = document.getElementById('badgeSrcLang');
+    const badgeTgtLang = document.getElementById('badgeTgtLang');
+    const liveInputHeading = document.getElementById('liveInputHeading');
+    const speedTranslateLabel = document.getElementById('speedTranslateLabel');
+    const viewTargetBtn = document.getElementById('viewTargetBtn');
+    const viewSourceBtn = document.getElementById('viewSourceBtn');
+    const settingsModal = document.getElementById('settingsModal');
+    const openSettingsBtn = document.getElementById('openSettingsBtn');
+    const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+    const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+    const customApiKeyInput = document.getElementById('customApiKeyInput');
+    const translationToneSelect = document.getElementById('translationToneSelect');
+    const browserNotice = document.getElementById('browserNotice');
+    const liveIndicatorLabel = document.getElementById('liveIndicatorLabel');
+    const waveBars = document.querySelectorAll('#audioWaveVisualizer span');
+
+    const toggleAutoSpeakBtn = document.getElementById('toggleAutoSpeakBtn');
+    const autoSpeakIcon = document.getElementById('autoSpeakIcon');
+    const autoSpeakText = document.getElementById('autoSpeakText');
+    const speechRateInput = document.getElementById('speechRateInput');
+    const speechRateVal = document.getElementById('speechRateVal');
+
+    const helpModal = document.getElementById('helpModal');
+    const openHelpBtn = document.getElementById('openHelpBtn');
+    const closeHelpBtn = document.getElementById('closeHelpBtn');
+    const okHelpBtn = document.getElementById('okHelpBtn');
+
+    // Toast helper
+    function showToast(message, type = 'info') {
+      const toast = document.getElementById('toast');
+      const toastMsg = document.getElementById('toastMsg');
+      const toastIcon = document.getElementById('toastIcon');
+
+      toastMsg.textContent = message;
+      if (type === 'success') {
+        toastIcon.className = 'fa-solid fa-circle-check text-emerald-400';
+      } else if (type === 'error') {
+        toastIcon.className = 'fa-solid fa-circle-exclamation text-rose-400';
+      } else {
+        toastIcon.className = 'fa-solid fa-circle-info text-indigo-400';
+      }
+
+      toast.classList.remove('translate-y-20', 'opacity-0', 'pointer-events-none');
+      setTimeout(() => {
+        toast.classList.add('translate-y-20', 'opacity-0', 'pointer-events-none');
+      }, 3200);
+    }
+
+    // Language switching and UI updating
+    function updateLanguageUI() {
+      sourceLangSelect.value = sourceLang;
+      targetLangSelect.value = targetLang;
+
+      const srcLabel = LANG_LABELS[sourceLang] || sourceLang;
+      const tgtLabel = LANG_LABELS[targetLang] || targetLang;
+
+      badgeSrcLang.textContent = LANG_CODES[sourceLang];
+      badgeTgtLang.textContent = LANG_CODES[targetLang];
+
+      liveInputHeading.textContent = `リアルタイム${srcLabel}発話認識中 (Live Input)`;
+      speedTranslateLabel.textContent = `${tgtLabel}速報訳`;
+      viewSourceBtn.textContent = `${srcLabel}のみ`;
+      viewTargetBtn.textContent = `${tgtLabel}のみ`;
+
+      if (sourceLang === 'en') {
+        dialectSelect.classList.remove('hidden');
+      } else {
+        dialectSelect.classList.add('hidden');
+      }
+
+      if (!isListening) {
+        interimText.textContent = `マイクボタンを押して${srcLabel}で話してください...`;
+      }
+
+      if (recognition) {
+        const wasListening = isListening;
+        recognition.lang = getRecognitionLangCode();
+        if (wasListening) {
+          recognition.stop();
+          setTimeout(() => {
+            try { recognition.start(); } catch(e) {}
+          }, 250);
+        }
+      }
+    }
+
+    function getRecognitionLangCode() {
+      if (sourceLang === 'en') return dialectSelect.value;
+      if (sourceLang === 'ja') return 'ja-JP';
+      if (sourceLang === 'ko') return 'ko-KR';
+      return 'en-US';
+    }
+
+    sourceLangSelect.addEventListener('change', (e) => {
+      sourceLang = e.target.value;
+      if (sourceLang === targetLang) {
+        targetLang = sourceLang === 'ja' ? 'en' : 'ja';
+      }
+      updateLanguageUI();
+      showToast(`言語を設定: ${LANG_LABELS[sourceLang]} → ${LANG_LABELS[targetLang]}`, 'info');
+    });
+
+    targetLangSelect.addEventListener('change', (e) => {
+      targetLang = e.target.value;
+      if (sourceLang === targetLang) {
+        sourceLang = targetLang === 'ja' ? 'en' : 'ja';
+      }
+      updateLanguageUI();
+      showToast(`言語を設定: ${LANG_LABELS[sourceLang]} → ${LANG_LABELS[targetLang]}`, 'info');
+    });
+
+    function swapLanguages() {
+      const temp = sourceLang;
+      sourceLang = targetLang;
+      targetLang = temp;
+      updateLanguageUI();
+      showToast(`言語を反転: ${LANG_LABELS[sourceLang]} → ${LANG_LABELS[targetLang]}`, 'info');
+    }
+
+    swapLanguagesBtn.addEventListener('click', swapLanguages);
+    quickSwapLangBtn.addEventListener('click', swapLanguages);
+
+    // Check speech recognition capability
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+      browserNotice.classList.remove('hidden');
+    }
+
+    function initSpeechRecognition() {
+      if (!SpeechRecognition) return null;
+
+      const sr = new SpeechRecognition();
+      sr.continuous = true;
+      sr.interimResults = true;
+      sr.lang = getRecognitionLangCode();
+      sr.maxAlternatives = 1;
+
+      sr.onstart = () => {
+        isListening = true;
+        updateUIState(true);
+        startVisualizer();
+      };
+
+      sr.onend = () => {
+        if (isListening) {
+          try {
+            sr.start();
+          } catch (e) {
+            console.warn('Recognition restart skipped:', e);
+          }
+        } else {
+          updateUIState(false);
+          stopVisualizer();
+        }
+      };
+
+      sr.onerror = (event) => {
+        console.warn('Speech Recognition error:', event.error);
+        if (event.error === 'not-allowed') {
+          showToast('マイクの使用が許可されていません。ブラウザ設定を確認してください。', 'error');
+          stopListening();
+        }
+      };
+
+      sr.onresult = (event) => {
+        let interimTranscript = '';
+        let finalTranscript = '';
+
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          const transcriptPiece = event.results[i][0].transcript;
+          if (event.results[i].isFinal) {
+            finalTranscript += transcriptPiece;
+          } else {
+            interimTranscript += transcriptPiece;
+          }
+        }
+
+        if (interimTranscript.trim()) {
+          interimText.textContent = interimTranscript;
+          debounceQuickTranslate(interimTranscript);
+        }
+
+        if (finalTranscript.trim()) {
+          processFinalTranscript(finalTranscript.trim());
+          interimText.textContent = '次の音声を待機中...';
+          liveTranslatingText.textContent = '―';
+        }
+      };
+
+      return sr;
+    }
+
+    // Debounce for interim speed translations
+    let debounceTimer = null;
+    function debounceQuickTranslate(text) {
+      clearTimeout(debounceTimer);
+      if (text.length < 2) return;
+      debounceTimer = setTimeout(async () => {
+        try {
+          const quickTranslation = await translateWithGemini(text, true);
+          if (quickTranslation) {
+            liveTranslatingText.textContent = quickTranslation;
+          }
+        } catch (e) {
+          // Silent catch for interim translations
+        }
+      }, 350);
+    }
+
+    // Translation with Gemini API
+    async function translateWithGemini(sourceText, isQuick = false) {
+      const srcName = LANG_LABELS[sourceLang] || 'English';
+      const tgtName = LANG_LABELS[targetLang] || 'Japanese';
+
+      const toneGuidelines = {
+        natural: "Natural and conversational phrasing appropriate for daily discussion.",
+        business: "Polite, formal, and professional style suitable for conferences and business meetings.",
+        casual: "Friendly, casual everyday speech among peers.",
+        compact: "Concise subtitle-style phrasing preserving key information succinctly."
+      };
+
+      const systemPrompt = `You are a professional real-time simultaneous interpreter and translator.
+Translate the provided spoken text from ${srcName} into fluent, context-aware ${tgtName}.
+Tone guideline: ${toneGuidelines[currentTone] || toneGuidelines.natural}
+Important instructions:
+- Output ONLY the ${tgtName} translation.
+- Do NOT include phonetic transcription, notes, explanations, or quotes.`;
+
+      const activeKey = apiKey || '';
+      const apiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${activeKey}`;
+
+      const payload = {
+        contents: [{
+          role: 'user',
+          parts: [{ text: sourceText }]
+        }],
+        systemInstruction: {
+          parts: [{ text: systemPrompt }]
+        },
+        generationConfig: {
+          temperature: isQuick ? 0.1 : 0.2,
+          maxOutputTokens: 250,
+        }
+      };
+
+      let attempt = 0;
+      const maxAttempts = 3;
+      while (attempt < maxAttempts) {
+        try {
+          const response = await fetch(apiUrl, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload)
+          });
+
+          if (!response.ok) {
+            throw new Error(`Status ${response.status}`);
+          }
+
+          const result = await response.json();
+          const translated = result.candidates?.[0]?.content?.parts?.[0]?.text?.trim();
+          return translated || sourceText;
+        } catch (err) {
+          attempt++;
+          if (attempt >= maxAttempts) {
+            console.warn('Gemini translate failed after retries:', err);
+            return fallbackTranslate(sourceText);
+          }
+          await new Promise(r => setTimeout(r, Math.pow(2, attempt) * 500));
+        }
+      }
+    }
+
+    function fallbackTranslate(text) {
+      return `[翻訳取得中...] ${text}`;
+    }
+
+    // Process completed speech items - ALWAYS INSERT AT TOP (unshift)
+    async function processFinalTranscript(sourceText) {
+      const id = Date.now().toString(36) + Math.random().toString(36).substr(2);
+      const timestamp = new Date().toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+
+      const item = {
+        id,
+        timestamp,
+        sourceCode: sourceLang,
+        targetCode: targetLang,
+        sourceLang: LANG_CODES[sourceLang],
+        targetLang: LANG_CODES[targetLang],
+        sourceText: sourceText,
+        translatedText: '翻訳中...',
+        isTranslating: true
+      };
+
+      // Add to front of array so newest item is at the top
+      transcripts.unshift(item);
+      renderTranscripts();
+
+      const translated = await translateWithGemini(sourceText);
+      item.translatedText = translated;
+      item.isTranslating = false;
+
+      renderTranscripts();
+
+      // Auto-TTS if enabled
+      if (autoSpeakEnabled && translated && !translated.startsWith('[翻訳取得中')) {
+        speakText(translated, item.targetCode);
+      }
+    }
+
+    // Speech Synthesis (Text to Speech)
+    function speakText(text, langCode) {
+      if (!('speechSynthesis' in window)) {
+        showToast('お使いのブラウザは音声読み上げに対応していません', 'error');
+        return;
+      }
+
+      window.speechSynthesis.cancel();
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = speechRate || 1.0;
+      utterance.pitch = 1.0;
+
+      const codeNormalized = (langCode || '').toLowerCase();
+      let targetBcp47 = 'ja-JP';
+      if (codeNormalized === 'en') targetBcp47 = 'en-US';
+      else if (codeNormalized === 'ko') targetBcp47 = 'ko-KR';
+      else targetBcp47 = 'ja-JP';
+
+      utterance.lang = targetBcp47;
+
+      const voices = window.speechSynthesis.getVoices();
+      if (voices.length > 0) {
+        const matchingVoice = voices.find(v => v.lang.toLowerCase().replace('_', '-').startsWith(codeNormalized));
+        if (matchingVoice) {
+          utterance.voice = matchingVoice;
+        }
+      }
+
+      utterance.onstart = () => { isSpeaking = true; };
+      utterance.onend = () => { isSpeaking = false; };
+      utterance.onerror = (e) => {
+        console.warn('SpeechSynthesis error:', e);
+        isSpeaking = false;
+      };
+
+      window.speechSynthesis.speak(utterance);
+    }
+
+    // Window global helper for item playback
+    window.speakTranscript = function(id, type = 'target') {
+      const item = transcripts.find(t => t.id === id);
+      if (!item) return;
+
+      if (type === 'target') {
+        if (!item.translatedText || item.isTranslating) return;
+        speakText(item.translatedText, item.targetCode || item.targetLang);
+      } else {
+        speakText(item.sourceText, item.sourceCode || item.sourceLang);
+      }
+    };
+
+    // Auto-TTS toggle handling
+    toggleAutoSpeakBtn.addEventListener('click', () => {
+      autoSpeakEnabled = !autoSpeakEnabled;
+      if (autoSpeakEnabled) {
+        autoSpeakIcon.className = 'fa-solid fa-volume-high text-indigo-400 text-xs animate-pulse';
+        autoSpeakText.textContent = 'ON';
+        autoSpeakText.className = 'font-semibold text-indigo-400';
+        toggleAutoSpeakBtn.className = 'flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium border border-indigo-500/50 bg-indigo-500/20 text-white transition';
+        showToast('翻訳完了時の自動音声読み上げを有効にしました', 'success');
+      } else {
+        autoSpeakIcon.className = 'fa-solid fa-volume-xmark text-slate-400 text-xs';
+        autoSpeakText.textContent = 'OFF';
+        autoSpeakText.className = 'font-semibold text-slate-400';
+        toggleAutoSpeakBtn.className = 'flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-medium border border-slate-700 bg-slate-800/80 text-slate-300 hover:text-white hover:border-slate-600 transition';
+        window.speechSynthesis.cancel();
+        showToast('自動音声読み上げをオフにしました', 'info');
+      }
+    });
+
+    speechRateInput.addEventListener('input', (e) => {
+      speechRate = parseFloat(e.target.value);
+      speechRateVal.textContent = speechRate.toFixed(1) + 'x';
+    });
+
+    // Render list of transcripts
+    function renderTranscripts() {
+      if (transcripts.length === 0) {
+        emptyState.classList.remove('hidden');
+        transcriptsContainer.innerHTML = '';
+        transcriptsContainer.appendChild(emptyState);
+        transcriptCountBadge.textContent = '0件';
+        return;
+      }
+
+      emptyState.classList.add('hidden');
+      transcriptCountBadge.textContent = `${transcripts.length}件`;
+
+      const html = transcripts.map((item, index) => {
+        const isLatest = index === 0;
+        const borderHighlight = isLatest ? 'border-indigo-500/50 bg-slate-900/90 shadow-lg shadow-indigo-500/5' : 'border-slate-800 bg-slate-900/60';
+        const latestBadge = isLatest ? '<span class="text-[10px] uppercase font-bold text-indigo-400 bg-indigo-500/20 px-1.5 py-0.5 rounded border border-indigo-500/30">最新</span>' : '';
+
+        return `
+          <div class="rounded-xl border ${borderHighlight} p-4 transition-all duration-200 hover:border-slate-700" data-id="${item.id}">
+            <div class="flex items-center justify-between pb-2 mb-2 border-b border-slate-800/80 text-xs text-slate-400">
+              <div class="flex items-center gap-2">
+                ${latestBadge}
+                <span class="font-mono text-[11px] text-slate-500">${item.timestamp}</span>
+                <span class="px-1.5 py-0.5 rounded text-[10px] font-semibold bg-slate-800 text-slate-300 border border-slate-700">
+                  ${item.sourceLang} → ${item.targetLang}
+                </span>
+              </div>
+              <div class="flex items-center gap-1">
+                <button onclick="copySingleTranscript('${item.id}')" class="p-1.5 rounded hover:bg-slate-800 hover:text-white transition" title="訳文をコピー">
+                  <i class="fa-regular fa-copy text-xs"></i>
+                </button>
+                <button onclick="deleteSingleTranscript('${item.id}')" class="p-1.5 rounded hover:bg-rose-900/40 hover:text-rose-300 transition" title="削除">
+                  <i class="fa-solid fa-xmark text-xs"></i>
+                </button>
+              </div>
+            </div>
+
+            <div class="space-y-3">
+              <!-- Target Translation (Primary focus) -->
+              <div class="${activeViewMode === 'source' ? 'hidden' : 'block'} flex items-start justify-between gap-3">
+                <div class="flex-1">
+                  <span class="text-[10px] font-bold text-indigo-400 uppercase tracking-wider block mb-1">
+                    ${LANG_LABELS[item.targetCode] || '翻訳'} (${item.targetLang})
+                  </span>
+                  <p class="text-base sm:text-lg font-semibold text-white leading-relaxed ${item.isTranslating ? 'animate-pulse text-indigo-300' : ''}">
+                    ${escapeHtml(item.translatedText)}
+                  </p>
+                </div>
+                <button onclick="speakTranscript('${item.id}', 'target')" class="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-600/20 hover:bg-indigo-600 border border-indigo-500/40 text-indigo-300 hover:text-white text-xs font-medium transition active:scale-95 cursor-pointer mt-0.5" title="スピーカーで再生">
+                  <i class="fa-solid fa-volume-high text-sm"></i>
+                  <span>再生</span>
+                </button>
+              </div>
+
+              <!-- Source Original -->
+              <div class="${activeViewMode === 'target' ? 'hidden' : 'block'} pt-2 border-t border-slate-800/60 flex items-start justify-between gap-2">
+                <div class="flex-1">
+                  <span class="text-[10px] font-medium text-slate-400 uppercase tracking-wider block mb-0.5">
+                    ${LANG_LABELS[item.sourceCode] || '原文'} (${item.sourceLang})
+                  </span>
+                  <p class="text-sm text-slate-300 leading-normal">
+                    ${escapeHtml(item.sourceText)}
+                  </p>
+                </div>
+                <button onclick="speakTranscript('${item.id}', 'source')" class="shrink-0 p-1.5 rounded text-slate-400 hover:text-white hover:bg-slate-800 transition" title="原文を再生">
+                  <i class="fa-solid fa-volume-low text-xs"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+
+      transcriptsContainer.innerHTML = html;
+    }
+
+    function escapeHtml(string) {
+      if (!string) return '';
+      const div = document.createElement('div');
+      div.textContent = string;
+      return div.innerHTML;
+    }
+
+    // UI state indicator
+    function updateUIState(active) {
+      const srcLabel = LANG_LABELS[sourceLang] || '音声';
+      if (active) {
+        micBtnIcon.className = 'fa-solid fa-microphone-lines text-rose-400 animate-pulse text-lg';
+        micBtnText.textContent = 'リスニング停止';
+        statusDot.className = 'w-2 h-2 rounded-full bg-emerald-400 animate-ping';
+        statusText.textContent = `${srcLabel} 認識中`;
+        statusBadge.className = 'flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-950/60 border border-emerald-500/40 text-xs font-medium text-emerald-300';
+        liveIndicatorLabel.textContent = `${srcLabel}の音声を聞き取り中...`;
+      } else {
+        micBtnIcon.className = 'fa-solid fa-microphone text-lg';
+        micBtnText.textContent = 'リスニング開始';
+        statusDot.className = 'w-2 h-2 rounded-full bg-slate-500';
+        statusText.textContent = '停止中';
+        statusBadge.className = 'flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-800 border border-slate-700 text-xs font-medium text-slate-300';
+        liveIndicatorLabel.textContent = 'マイクは停止しています';
+      }
+    }
+
+    function startListening() {
+      if (!recognition) {
+        recognition = initSpeechRecognition();
+      }
+      if (!recognition) {
+        showToast('お使いのブラウザは音声認識をサポートしていません', 'error');
+        return;
+      }
+      try {
+        recognition.lang = getRecognitionLangCode();
+        recognition.start();
+        showToast(`${LANG_LABELS[sourceLang]}リスニングを開始しました`, 'info');
+      } catch (err) {
+        console.warn('Recognition start caught:', err);
+      }
+    }
+
+    function stopListening() {
+      if (recognition) {
+        recognition.stop();
+      }
+      isListening = false;
+      updateUIState(false);
+      stopVisualizer();
+      showToast('リスニングを停止しました', 'info');
+    }
+
+    toggleRecordBtn.addEventListener('click', () => {
+      if (isListening) {
+        stopListening();
+      } else {
+        startListening();
+      }
+    });
+
+    // Web Audio visualizer animation
+    function startVisualizer() {
+      waveBars.forEach(bar => {
+        bar.classList.remove('bg-indigo-500/30');
+        bar.classList.add('bg-emerald-400');
+      });
+
+      function animate() {
+        if (!isListening) return;
+        waveBars.forEach(bar => {
+          const h = Math.floor(Math.random() * 18) + 4;
+          bar.style.height = `${h}px`;
+        });
+        visualizerAnimationId = setTimeout(animate, 90);
+      }
+      animate();
+    }
+
+    function stopVisualizer() {
+      clearTimeout(visualizerAnimationId);
+      waveBars.forEach(bar => {
+        bar.style.height = '6px';
+        bar.classList.remove('bg-emerald-400');
+        bar.classList.add('bg-indigo-500/30');
+      });
+    }
+
+    // Dialect change
+    dialectSelect.addEventListener('change', () => {
+      if (recognition && sourceLang === 'en') {
+        recognition.lang = dialectSelect.value;
+        if (isListening) {
+          recognition.stop();
+          setTimeout(() => recognition.start(), 200);
+        }
+      }
+    });
+
+    // Multilingual demo sentences
+    const demoPhrasesEn = [
+      "Welcome everyone to today's conference on artificial intelligence and real-time speech translation.",
+      "As you can see, the speech recognition captures English sentences with high accuracy.",
+      "Gemini is translating each complete thought into natural, context-aware subtitles immediately.",
+      "This enables smooth international meetings across Japanese, English, and Korean.",
+      "Feel free to speak into your own microphone or try swapping languages!"
+    ];
+
+    const demoPhrasesJa = [
+      "本日はリアルタイム多言語音声翻訳のデモンストレーションへようこそ。",
+      "日本語、英語、韓国語の音声をマイクで聞き取り、即座に自然な表現へ同時翻訳します。",
+      "これにより、日米韓のクライアントや同僚とのオンラインミーティングがとても円滑になります。",
+      "画面上部の言語選択メニューで、どの言語同士の組み合わせでも瞬時に切り替え可能です。",
+      "ご自身のマイクを使って発話し、精度の高さをぜひ体験してみてください。"
+    ];
+
+    const demoPhrasesKo = [
+      "실시간 인공지능 다국어 음성 번역 서비스에 오신 것을 환영합니다.",
+      "한국어 음성을 마イク로 인식하여 영어와 일본어로 즉시 번역합니다.",
+      "국제 화상 회의나 세미나에서 언어 장벽 없이 원활한 소통이 가능해집니다.",
+      "상단 버튼을 눌러 발화 언어와 번역 언어를 자유롭게 전환해보세요.",
+      "직접 마이크를 켜고 한국어로 말씀하시거나 스피カー 재생 버튼을 테스트해보세요."
+    ];
+    let demoIndex = 0;
+
+    demoSpeechBtn.addEventListener('click', async () => {
+      let list = demoPhrasesEn;
+      if (sourceLang === 'ja') list = demoPhrasesJa;
+      else if (sourceLang === 'ko') list = demoPhrasesKo;
+
+      const phrase = list[demoIndex % list.length];
+      demoIndex++;
+
+      interimText.textContent = phrase;
+      liveTranslatingText.textContent = '翻訳中...';
+
+      await processFinalTranscript(phrase);
+      showToast('デモ文を認識・翻訳しました', 'success');
+    });
+
+    // Item-level operations
+    window.copySingleTranscript = function(id) {
+      const item = transcripts.find(t => t.id === id);
+      if (!item) return;
+
+      const copyText = `${item.translatedText}\n(${item.sourceText})`;
+      copyToClipboard(copyText);
+      showToast('カードの内容をコピーしました', 'success');
+    };
+
+    window.deleteSingleTranscript = function(id) {
+      transcripts = transcripts.filter(t => t.id !== id);
+      renderTranscripts();
+      showToast('履歴カードを削除しました', 'info');
+    };
+
+    function copyToClipboard(text) {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.select();
+      try {
+        document.execCommand('copy');
+      } catch (err) {
+        console.warn('execCommand copy error:', err);
+      }
+      document.body.removeChild(textarea);
+    }
+
+    // Copy all transcripts
+    copyAllBtn.addEventListener('click', () => {
+      if (transcripts.length === 0) {
+        showToast('コピーする履歴がありません', 'error');
+        return;
+      }
+      const allText = transcripts.map(item => `[${item.timestamp}] [${item.sourceLang}→${item.targetLang}]\n訳文: ${item.translatedText}\n原文: ${item.sourceText}\n`).join('\n');
+      copyToClipboard(allText);
+      showToast('すべての履歴をクリップボードにコピーしました', 'success');
+    });
+
+    // Export to text file
+    exportBtn.addEventListener('click', () => {
+      if (transcripts.length === 0) {
+        showToast('保存する履歴がありません', 'error');
+        return;
+      }
+      const allText = `# VoiceTranscribe 字幕・翻訳ログ\n作成日時: ${new Date().toLocaleString('ja-JP')}\n\n` +
+        transcripts.map(item => `### [${item.timestamp}] (${item.sourceLang} → ${item.targetLang})\n- **訳文**: ${item.translatedText}\n- **原文**: ${item.sourceText}\n`).join('\n');
+
+      const blob = new Blob([allText], { type: 'text/markdown;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `VoiceTranscribe_${new Date().toISOString().slice(0, 10)}.md`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      showToast('ファイルをダウンロードしました', 'success');
+    });
+
+    // Clear all
+    clearTranscriptsBtn.addEventListener('click', () => {
+      if (transcripts.length === 0) return;
+      transcripts = [];
+      renderTranscripts();
+      showToast('すべての履歴を消去しました', 'info');
+    });
+
+    // View mode filters
+    document.querySelectorAll('.view-mode-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.view-mode-btn').forEach(b => {
+          b.classList.remove('active', 'bg-indigo-600', 'text-white');
+          b.classList.add('text-slate-400');
+        });
+        btn.classList.add('active', 'bg-indigo-600', 'text-white');
+        btn.classList.remove('text-slate-400');
+        activeViewMode = btn.getAttribute('data-view');
+        renderTranscripts();
+      });
+    });
+
+    // Settings Modal
+    openSettingsBtn.addEventListener('click', () => {
+      customApiKeyInput.value = apiKey;
+      translationToneSelect.value = currentTone;
+      settingsModal.classList.remove('hidden');
+    });
+
+    closeSettingsBtn.addEventListener('click', () => {
+      settingsModal.classList.add('hidden');
+    });
+
+    saveSettingsBtn.addEventListener('click', () => {
+      apiKey = customApiKeyInput.value.trim();
+      currentTone = translationToneSelect.value;
+      localStorage.setItem('vt_gemini_api_key', apiKey);
+      localStorage.setItem('vt_translation_tone', currentTone);
+      settingsModal.classList.add('hidden');
+      showToast('設定を保存しました', 'success');
+    });
+
+    // Help Guide Modal
+    openHelpBtn.addEventListener('click', () => {
+      helpModal.classList.remove('hidden');
+    });
+    closeHelpBtn.addEventListener('click', () => {
+      helpModal.classList.add('hidden');
+    });
+    okHelpBtn.addEventListener('click', () => {
+      helpModal.classList.add('hidden');
+    });
+
+    // Restore saved settings on load
+    window.onload = function () {
+      const savedKey = localStorage.getItem('vt_gemini_api_key');
+      if (savedKey) apiKey = savedKey;
+
+      const savedTone = localStorage.getItem('vt_translation_tone');
+      if (savedTone) currentTone = savedTone;
+
+      if ('speechSynthesis' in window) {
+        window.speechSynthesis.getVoices();
+      }
+
+      updateLanguageUI();
+      renderTranscripts();
+    };
+  </script>
+</body>
+</html>
