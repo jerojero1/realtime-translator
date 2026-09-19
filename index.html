@@ -3,13 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>リアルタイムAI音声通訳 (完全無料・制限回避版)</title>
+    <title>リアルタイムAI音声通訳 (完全無料版)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
 <body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col font-sans">
 
-    <!-- Header -->
     <header class="bg-slate-800 border-b border-slate-700 p-4 sticky top-0 z-50">
         <div class="max-w-4xl mx-auto flex justify-between items-center">
             <div class="flex items-center space-x-3">
@@ -18,7 +17,7 @@
                 </div>
                 <div>
                     <h1 class="font-bold text-lg leading-tight">リアルタイム通訳 (無制限版)</h1>
-                    <p class="text-xs text-slate-400">設定不要・複数エンジン自動切替</p>
+                    <p class="text-xs text-slate-400">APIキー不要・複数エンジン自動切替</p>
                 </div>
             </div>
             
@@ -34,13 +33,11 @@
         </div>
     </header>
 
-    <!-- Main Container -->
     <main class="max-w-4xl mx-auto w-full flex-1 p-4 flex flex-col gap-4">
-
         <!-- Control Panel -->
         <div class="bg-slate-800 rounded-xl p-4 border border-slate-700 shadow-lg space-y-4">
             
-            <!-- Language Selectors & Swap -->
+            <!-- Language Selectors -->
             <div class="flex items-center justify-between gap-2 bg-slate-900/60 p-2 rounded-lg border border-slate-700/50">
                 <div class="flex-1">
                     <label class="block text-[10px] text-slate-400 uppercase tracking-wider mb-1">話す言語 (入力)</label>
@@ -65,7 +62,6 @@
                 </div>
             </div>
 
-            <!-- Action Buttons -->
             <div class="flex flex-wrap items-center gap-3">
                 <button id="micBtn" onclick="toggleListening()" class="flex-1 py-3 px-6 rounded-lg font-bold flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg transition active:scale-95">
                     <i class="fa-solid fa-microphone text-lg" id="micIcon"></i>
@@ -99,14 +95,12 @@
             <button onclick="clearTranscripts()" class="text-xs text-slate-500 hover:text-red-400 transition">履歴消去</button>
         </div>
 
-        <!-- Transcript Cards List -->
         <div id="transcriptList" class="flex-1 space-y-3 overflow-y-auto min-h-[300px]">
             <!-- Dynamic Items Inserted Here -->
         </div>
-
     </main>
 
-    <!-- Settings Modal (Only for Audio Speed) -->
+    <!-- Settings Modal (API Key removed, only speed adjustment) -->
     <div id="settingsModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
         <div class="bg-slate-800 border border-slate-700 rounded-xl p-6 max-w-sm w-full shadow-2xl space-y-4">
             <div class="flex justify-between items-center border-b border-slate-700 pb-3">
@@ -134,14 +128,13 @@
         </div>
     </div>
 
-    <!-- Application Script -->
     <script>
         let recognition = null;
         let isListening = false;
         let autoTTS = false;
         let transcripts = [];
 
-        // Language codes for APIs
+        // Language codes mapped for free APIs
         const LANG_MAP = {
             'ja-JP': { name: '日本語', flag: '🇯🇵', voiceLang: 'ja-JP', apiCode: 'ja' },
             'en-US': { name: '英語', flag: '🇺🇸', voiceLang: 'en-US', apiCode: 'en' },
@@ -149,9 +142,9 @@
         };
 
         const DEMO_PHRASES = {
-            'ja-JP': 'こんにちは。今日は複数のAPIを組み合わせた、新しい翻訳システムのテストを行っています。',
-            'en-US': 'Hello everyone. We are testing a new translation system combining multiple APIs today.',
-            'ko-KR': '안녕하세요. 오늘은 여러 API를 조합한 새로운 번역 시스템을 테스트하고 있습니다.'
+            'ja-JP': 'こんにちは。今日は新しい翻訳エンジンのテストを行っています。',
+            'en-US': 'Hello everyone. We are testing a new translation engine today.',
+            'ko-KR': '안녕하세요. 오늘은 새로운 번역 엔진을 테스트하고 있습니다.'
         };
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -196,15 +189,22 @@
 
             recognition.onerror = (e) => {
                 console.error('Speech recognition error:', e.error);
-                if (e.error === 'not-allowed') {
-                    alert('マイクの使用が拒否されています。ブラウザのアドレスバーのアイコンからマイクの権限を許可してください。');
-                    stopListening();
+                
+                // 致命的なエラーやマイク拒否の場合はリスニングを強制停止
+                if (e.error === 'not-allowed' || e.error === 'aborted') {
+                    isListening = false;
+                    stopListeningUI();
                 }
             };
 
             recognition.onend = () => {
                 if (isListening) {
-                    try { recognition.start(); } catch(err){}
+                    // ループ暴走を防ぐため、少し遅延を入れて再起動
+                    setTimeout(() => {
+                        if (isListening) {
+                            try { recognition.start(); } catch(err){ console.error("再起動エラー", err); }
+                        }
+                    }, 50);
                 } else {
                     stopListeningUI();
                 }
@@ -212,11 +212,8 @@
         }
 
         function toggleListening() {
-            if (isListening) {
-                stopListening();
-            } else {
-                startListening();
-            }
+            if (isListening) stopListening();
+            else startListening();
         }
 
         function startListening() {
@@ -287,13 +284,13 @@
             const encodedText = encodeURIComponent(sourceText);
 
             try {
-                // [1] メイン: Google Translate (公開エンドポイント/制限緩め)
+                // [1] メイン: Google Translate 公開API (APIキー不要)
                 const gtxUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceApiCode}&tl=${targetApiCode}&dt=t&q=${encodedText}`;
                 let response = await fetch(gtxUrl);
                 
                 if (response.ok) {
                     const data = await response.json();
-                    if (data && data[0] && data[0][0] && data[0][0][0]) {
+                    if (data && data[0]) {
                         // 複数文に分かれている場合があるため結合
                         item.translated = data[0].map(arr => arr[0]).join('');
                         finishTranslation(item, tgtLangVal);
@@ -309,7 +306,7 @@
 
                 if (response.ok && data.responseData && data.responseData.translatedText) {
                     if (data.responseData.translatedText.includes("MYMEMORY_WARNING")) {
-                        item.translated = `⚠️ 両方の無料翻訳エンジンが制限に達しました。時間を置いてください。`;
+                        item.translated = `⚠️ 全ての無料翻訳エンジンの制限に達しました。時間を置いてください。`;
                     } else {
                         item.translated = data.responseData.translatedText;
                     }
@@ -321,12 +318,11 @@
                 console.error(err);
                 item.translated = '⚠️ 通信エラー: ネットワークを確認してください。';
             } finally {
-                finishTranslation(item, tgtLangVal, false);
+                finishTranslation(item, tgtLangVal);
             }
         }
 
-        // 翻訳完了時の処理（画面更新と音声読み上げ）
-        function finishTranslation(item, tgtLangVal, isFallback = false) {
+        function finishTranslation(item, tgtLangVal) {
             item.loading = false;
             renderTranscripts();
             if (autoTTS && !item.translated.startsWith('⚠️')) {
@@ -443,9 +439,3 @@
     </script>
 </body>
 </html>
-```
-
-右側のエディタに完全に書き換わったコードを表示しました。
-
-こちらをコピーして GitHub の `index.html` に貼り付けて上書き保存してください。
-保存後、数分待ってからページをリロードしていただくと、APIキーの設定なしで、メインの翻訳エンジンが動作するはずです（MYMEMORYの制限に引っかからなくなります）！
