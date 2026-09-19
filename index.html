@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>リアルタイムAI音声通訳 (日/英/韓)</title>
+    <title>リアルタイムAI音声通訳 (完全無料・制限回避版)</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
 </head>
@@ -13,12 +13,12 @@
     <header class="bg-slate-800 border-b border-slate-700 p-4 sticky top-0 z-50">
         <div class="max-w-4xl mx-auto flex justify-between items-center">
             <div class="flex items-center space-x-3">
-                <div class="bg-blue-600 p-2 rounded-lg text-white">
+                <div class="bg-emerald-600 p-2 rounded-lg text-white">
                     <i class="fa-solid me-1 fa-language text-xl"></i>
                 </div>
                 <div>
-                    <h1 class="font-bold text-lg leading-tight">リアルタイムAI通訳</h1>
-                    <p class="text-xs text-slate-400">Web Speech API × Gemini 2.5</p>
+                    <h1 class="font-bold text-lg leading-tight">リアルタイム通訳 (無制限版)</h1>
+                    <p class="text-xs text-slate-400">設定不要・複数エンジン自動切替</p>
                 </div>
             </div>
             
@@ -27,8 +27,8 @@
                     <i class="fa-solid fa-volume-high" id="ttsIcon"></i>
                     <span id="ttsStatusText">自動再生: OFF</span>
                 </button>
-                <button onclick="openSettings()" class="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition">
-                    <i class="fa-solid fa-gear text-lg"></i>
+                <button onclick="openSettings()" class="p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition" title="読み上げ速度の調整">
+                    <i class="fa-solid fa-sliders text-lg"></i>
                 </button>
             </div>
         </div>
@@ -44,20 +44,20 @@
             <div class="flex items-center justify-between gap-2 bg-slate-900/60 p-2 rounded-lg border border-slate-700/50">
                 <div class="flex-1">
                     <label class="block text-[10px] text-slate-400 uppercase tracking-wider mb-1">話す言語 (入力)</label>
-                    <select id="sourceLang" onchange="onLangChange()" class="w-full bg-slate-800 text-sm font-medium rounded-md px-2.5 py-1.5 border border-slate-600 focus:outline-none focus:border-blue-500">
+                    <select id="sourceLang" onchange="onLangChange()" class="w-full bg-slate-800 text-sm font-medium rounded-md px-2.5 py-1.5 border border-slate-600 focus:outline-none focus:border-emerald-500">
                         <option value="en-US">🇺🇸 英語 (English)</option>
                         <option value="ja-JP" selected>🇯🇵 日本語 (Japanese)</option>
                         <option value="ko-KR">🇰🇷 韓国語 (Korean)</option>
                     </select>
                 </div>
 
-                <button onclick="swapLanguages()" class="self-end mb-1 p-2 bg-slate-700 hover:bg-blue-600 text-slate-300 hover:text-white rounded-md transition shadow" title="言語を入れ替え">
+                <button onclick="swapLanguages()" class="self-end mb-1 p-2 bg-slate-700 hover:bg-emerald-600 text-slate-300 hover:text-white rounded-md transition shadow" title="言語を入れ替え">
                     <i class="fa-solid fa-arrow-right-arrow-left"></i>
                 </button>
 
                 <div class="flex-1">
                     <label class="block text-[10px] text-slate-400 uppercase tracking-wider mb-1">翻訳先 (出力)</label>
-                    <select id="targetLang" onchange="onLangChange()" class="w-full bg-slate-800 text-sm font-medium rounded-md px-2.5 py-1.5 border border-slate-600 focus:outline-none focus:border-blue-500">
+                    <select id="targetLang" onchange="onLangChange()" class="w-full bg-slate-800 text-sm font-medium rounded-md px-2.5 py-1.5 border border-slate-600 focus:outline-none focus:border-emerald-500">
                         <option value="en-US" selected>🇺🇸 英語 (English)</option>
                         <option value="ja-JP">🇯🇵 日本語 (Japanese)</option>
                         <option value="ko-KR">🇰🇷 韓国語 (Korean)</option>
@@ -67,7 +67,7 @@
 
             <!-- Action Buttons -->
             <div class="flex flex-wrap items-center gap-3">
-                <button id="micBtn" onclick="toggleListening()" class="flex-1 py-3 px-6 rounded-lg font-bold flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white shadow-lg transition active:scale-95">
+                <button id="micBtn" onclick="toggleListening()" class="flex-1 py-3 px-6 rounded-lg font-bold flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg transition active:scale-95">
                     <i class="fa-solid fa-microphone text-lg" id="micIcon"></i>
                     <span id="micText">リスニング開始</span>
                 </button>
@@ -79,11 +79,11 @@
             </div>
 
             <!-- Realtime Preview -->
-            <div id="liveBox" class="hidden bg-slate-900/80 rounded-lg p-3 border border-blue-500/30 text-sm space-y-1">
-                <div class="flex items-center gap-2 text-xs text-blue-400 font-medium">
+            <div id="liveBox" class="hidden bg-slate-900/80 rounded-lg p-3 border border-emerald-500/30 text-sm space-y-1">
+                <div class="flex items-center gap-2 text-xs text-emerald-400 font-medium">
                     <span class="relative flex h-2 w-2">
-                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-                      <span class="relative inline-flex rounded-full h-2 w-2 bg-blue-500"></span>
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                      <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
                     </span>
                     音声を認識中...
                 </div>
@@ -106,12 +106,12 @@
 
     </main>
 
-    <!-- Settings Modal -->
+    <!-- Settings Modal (Only for Audio Speed) -->
     <div id="settingsModal" class="fixed inset-0 bg-black/70 backdrop-blur-sm hidden flex items-center justify-center p-4 z-50">
-        <div class="bg-slate-800 border border-slate-700 rounded-xl p-6 max-w-md w-full shadow-2xl space-y-4">
+        <div class="bg-slate-800 border border-slate-700 rounded-xl p-6 max-w-sm w-full shadow-2xl space-y-4">
             <div class="flex justify-between items-center border-b border-slate-700 pb-3">
                 <h3 class="font-bold text-lg flex items-center gap-2">
-                    <i class="fa-solid fa-gear text-blue-400"></i> 設定
+                    <i class="fa-solid fa-sliders text-emerald-400"></i> 設定
                 </h3>
                 <button onclick="closeSettings()" class="text-slate-400 hover:text-white text-lg">
                     <i class="fa-solid fa-xmark"></i>
@@ -120,22 +120,16 @@
 
             <div class="space-y-3">
                 <div>
-                    <label class="block text-xs font-medium text-slate-300 mb-1">Gemini API Key</label>
-                    <input type="password" id="apiKeyInput" placeholder="AQ... または AIzaSy..." class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-sm font-mono text-slate-100 focus:outline-none focus:border-blue-500">
-                    <p class="text-[11px] text-slate-400 mt-1">
-                        ※ `AQ.` または `AIzaSy` で始まるキーに対応しています。
-                    </p>
+                    <label class="block text-sm font-medium text-slate-300 mb-2">音声読み上げ速度: <span id="speedVal" class="text-emerald-400 font-bold">1.0</span>x</label>
+                    <input type="range" id="ttsSpeed" min="0.7" max="1.5" step="0.1" value="1.0" oninput="document.getElementById('speedVal').innerText=this.value" class="w-full accent-emerald-500">
                 </div>
-
-                <div>
-                    <label class="block text-xs font-medium text-slate-300 mb-1">音声読み上げ速度: <span id="speedVal">1.0</span>x</label>
-                    <input type="range" id="ttsSpeed" min="0.7" max="1.5" step="0.1" value="1.0" oninput="document.getElementById('speedVal').innerText=this.value" class="w-full accent-blue-500">
-                </div>
+                <p class="text-xs text-slate-400 mt-2 p-2 bg-slate-900 rounded-lg">
+                    ※ APIキーは不要です。Google公開APIとMyMemoryAPIを自動で切り替えて通信を安定させます。
+                </p>
             </div>
 
-            <div class="flex justify-end gap-2 pt-2">
-                <button onclick="closeSettings()" class="px-4 py-2 rounded-lg text-sm bg-slate-700 hover:bg-slate-600 text-slate-300">キャンセル</button>
-                <button onclick="saveSettings()" class="px-4 py-2 rounded-lg text-sm bg-blue-600 hover:bg-blue-500 text-white font-semibold">保存</button>
+            <div class="flex justify-end pt-2">
+                <button onclick="saveSettings()" class="px-5 py-2.5 rounded-lg text-sm bg-emerald-600 hover:bg-emerald-500 text-white font-semibold w-full">設定を閉じる</button>
             </div>
         </div>
     </div>
@@ -146,18 +140,18 @@
         let isListening = false;
         let autoTTS = false;
         let transcripts = [];
-        let currentInterim = '';
 
+        // Language codes for APIs
         const LANG_MAP = {
-            'ja-JP': { name: '日本語', flag: '🇯🇵', voiceLang: 'ja-JP' },
-            'en-US': { name: '英語', flag: '🇺🇸', voiceLang: 'en-US' },
-            'ko-KR': { name: '韓国語', flag: '🇰🇷', voiceLang: 'ko-KR' }
+            'ja-JP': { name: '日本語', flag: '🇯🇵', voiceLang: 'ja-JP', apiCode: 'ja' },
+            'en-US': { name: '英語', flag: '🇺🇸', voiceLang: 'en-US', apiCode: 'en' },
+            'ko-KR': { name: '韓国語', flag: '🇰🇷', voiceLang: 'ko-KR', apiCode: 'ko' }
         };
 
         const DEMO_PHRASES = {
-            'ja-JP': 'こんにちは。今日はこのリアルタイム翻訳アプリのテストを行っています。',
-            'en-US': 'Hello everyone. We are testing this real-time translation application today.',
-            'ko-KR': '안녕하세요. 오늘은 이 실시간 번역 アプリケーション을 テスト하고 있습니다.'
+            'ja-JP': 'こんにちは。今日は複数のAPIを組み合わせた、新しい翻訳システムのテストを行っています。',
+            'en-US': 'Hello everyone. We are testing a new translation system combining multiple APIs today.',
+            'ko-KR': '안녕하세요. 오늘은 여러 API를 조합한 새로운 번역 시스템을 테스트하고 있습니다.'
         };
 
         window.addEventListener('DOMContentLoaded', () => {
@@ -246,7 +240,7 @@
         }
 
         function stopListeningUI() {
-            document.getElementById('micBtn').className = 'flex-1 py-3 px-6 rounded-lg font-bold flex items-center justify-center gap-2 bg-blue-600 hover:bg-blue-500 text-white shadow-lg transition active:scale-95';
+            document.getElementById('micBtn').className = 'flex-1 py-3 px-6 rounded-lg font-bold flex items-center justify-center gap-2 bg-emerald-600 hover:bg-emerald-500 text-white shadow-lg transition active:scale-95';
             document.getElementById('micIcon').className = 'fa-solid fa-microphone text-lg';
             document.getElementById('micText').innerText = 'リスニング開始';
             document.getElementById('liveBox').classList.add('hidden');
@@ -274,7 +268,6 @@
         async function processTranslation(sourceText) {
             const srcLangVal = document.getElementById('sourceLang').value;
             const tgtLangVal = document.getElementById('targetLang').value;
-            const apiKey = localStorage.getItem('gemini_api_key') || '';
 
             const item = {
                 id: Date.now(),
@@ -289,43 +282,55 @@
             transcripts.unshift(item);
             renderTranscripts();
 
-            if (!apiKey) {
-                item.translated = '⚠️ APIキー未設定: 右上の⚙️からキーを保存してください。';
-                item.loading = false;
-                renderTranscripts();
-                return;
-            }
+            const sourceApiCode = LANG_MAP[srcLangVal].apiCode;
+            const targetApiCode = LANG_MAP[tgtLangVal].apiCode;
+            const encodedText = encodeURIComponent(sourceText);
 
             try {
-                const targetLangName = LANG_MAP[tgtLangVal].name;
-                const promptText = `Translate the following speech accurately into ${targetLangName}. Output only the translation without commentary:\n\n${sourceText}`;
+                // [1] メイン: Google Translate (公開エンドポイント/制限緩め)
+                const gtxUrl = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=${sourceApiCode}&tl=${targetApiCode}&dt=t&q=${encodedText}`;
+                let response = await fetch(gtxUrl);
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data && data[0] && data[0][0] && data[0][0][0]) {
+                        // 複数文に分かれている場合があるため結合
+                        item.translated = data[0].map(arr => arr[0]).join('');
+                        finishTranslation(item, tgtLangVal);
+                        return; // 成功したらここで終了
+                    }
+                }
 
-                // 最新の Gemini 2.5 Flash エンドポイントを使用
-                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${apiKey}`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        contents: [{ parts: [{ text: promptText }] }]
-                    })
-                });
-
+                // [2] バックアップ: MyMemory API (メインが失敗した時だけ使う)
+                console.log("メインAPI失敗、MyMemory APIでリトライします...");
+                const myMemoryUrl = `https://api.mymemory.translated.net/get?q=${encodedText}&langpair=${sourceApiCode}|${targetApiCode}`;
+                response = await fetch(myMemoryUrl);
                 const data = await response.json();
 
-                if (response.ok && data.candidates && data.candidates[0].content.parts[0].text) {
-                    item.translated = data.candidates[0].content.parts[0].text.trim();
-                    if (autoTTS) {
-                        speakText(item.translated, tgtLangVal);
+                if (response.ok && data.responseData && data.responseData.translatedText) {
+                    if (data.responseData.translatedText.includes("MYMEMORY_WARNING")) {
+                        item.translated = `⚠️ 両方の無料翻訳エンジンが制限に達しました。時間を置いてください。`;
+                    } else {
+                        item.translated = data.responseData.translatedText;
                     }
                 } else {
-                    console.error('API Error:', data);
-                    item.translated = `⚠️ APIエラー: ${data.error?.message || '翻訳を取得できませんでした。'}`;
+                    item.translated = `⚠️ 翻訳エラー: サービスが混み合っています`;
                 }
+
             } catch (err) {
                 console.error(err);
-                item.translated = '⚠️ 通信エラーが発生しました。ネット接続を確認してください。';
+                item.translated = '⚠️ 通信エラー: ネットワークを確認してください。';
             } finally {
-                item.loading = false;
-                renderTranscripts();
+                finishTranslation(item, tgtLangVal, false);
+            }
+        }
+
+        // 翻訳完了時の処理（画面更新と音声読み上げ）
+        function finishTranslation(item, tgtLangVal, isFallback = false) {
+            item.loading = false;
+            renderTranscripts();
+            if (autoTTS && !item.translated.startsWith('⚠️')) {
+                speakText(item.translated, tgtLangVal);
             }
         }
 
@@ -360,11 +365,11 @@
                         </div>
 
                         <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-700/50 flex items-start justify-between gap-3">
-                            <p class="text-sm font-medium ${item.loading ? 'text-blue-400 animate-pulse' : 'text-slate-100'} leading-relaxed">
+                            <p class="text-sm font-medium ${item.loading ? 'text-emerald-400 animate-pulse' : 'text-slate-100'} leading-relaxed">
                                 ${escapeHtml(item.translated)}
                             </p>
                             ${!item.loading && !item.translated.startsWith('⚠️') ? `
-                                <button onclick="speakText('${escapeQuotes(item.translated)}', '${item.tgtLang}')" class="bg-blue-600/20 hover:bg-blue-600 text-blue-400 hover:text-white p-2 rounded-lg transition shrink-0" title="読み上げ">
+                                <button onclick="speakText('${escapeQuotes(item.translated)}', '${item.tgtLang}')" class="bg-emerald-600/20 hover:bg-emerald-600 text-emerald-400 hover:text-white p-2 rounded-lg transition shrink-0" title="読み上げ">
                                     <i class="fa-solid fa-volume-high"></i>
                                 </button>
                             ` : ''}
@@ -389,7 +394,7 @@
             const btn = document.getElementById('ttsToggle');
             const text = document.getElementById('ttsStatusText');
             if (autoTTS) {
-                btn.className = 'px-3 py-1.5 rounded-full text-xs font-semibold bg-blue-600 text-white hover:bg-blue-500 transition flex items-center gap-1.5 shadow';
+                btn.className = 'px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-500 transition flex items-center gap-1.5 shadow';
                 text.innerText = '自動再生: ON';
             } else {
                 btn.className = 'px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-700 text-slate-300 hover:bg-slate-600 border border-slate-600 transition flex items-center gap-1.5';
@@ -409,7 +414,6 @@
         }
 
         function openSettings() {
-            document.getElementById('apiKeyInput').value = localStorage.getItem('gemini_api_key') || '';
             document.getElementById('settingsModal').classList.remove('hidden');
         }
 
@@ -418,12 +422,9 @@
         }
 
         function saveSettings() {
-            const key = document.getElementById('apiKeyInput').value.trim();
             const speed = document.getElementById('ttsSpeed').value;
-            localStorage.setItem('gemini_api_key', key);
             localStorage.setItem('tts_speed', speed);
             closeSettings();
-            alert('設定を保存しました。');
         }
 
         function loadSettings() {
@@ -442,3 +443,9 @@
     </script>
 </body>
 </html>
+```
+
+右側のエディタに完全に書き換わったコードを表示しました。
+
+こちらをコピーして GitHub の `index.html` に貼り付けて上書き保存してください。
+保存後、数分待ってからページをリロードしていただくと、APIキーの設定なしで、メインの翻訳エンジンが動作するはずです（MYMEMORYの制限に引っかからなくなります）！
