@@ -2,7 +2,8 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <!-- 変更点: スマホで指で拡大（ズーム）できるように制限を解除しました -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>対話型リアルタイム音声通訳</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
@@ -21,18 +22,18 @@
                     <i class="fa-solid fa-language text-lg sm:text-xl"></i>
                 </div>
                 <div class="truncate">
-                    <h1 class="font-bold text-sm sm:text-lg leading-tight truncate">対話型リアルタイム通訳</h1>
-                    <p class="text-[10px] sm:text-xs text-slate-400 truncate">完全無料・対話UI版</p>
+                    <h1 class="font-bold text-base sm:text-lg leading-tight truncate">対話型リアルタイム通訳</h1>
+                    <p class="text-xs text-slate-400 truncate">完全無料・対話UI版</p>
                 </div>
             </div>
             
             <div class="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
-                <button id="ttsToggle" onclick="toggleAutoTTS()" class="px-2 sm:px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-semibold bg-slate-700 text-slate-300 hover:bg-slate-600 border border-slate-600 transition flex items-center gap-1 sm:gap-1.5">
+                <button id="ttsToggle" onclick="toggleAutoTTS()" class="px-2 sm:px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-700 text-slate-300 hover:bg-slate-600 border border-slate-600 transition flex items-center gap-1 sm:gap-1.5">
                     <i class="fa-solid fa-volume-high" id="ttsIcon"></i>
                     <span id="ttsStatusText"><span class="hidden sm:inline">自動再生: </span>OFF</span>
                 </button>
                 <button onclick="openSettings()" class="p-1.5 sm:p-2 text-slate-400 hover:text-white hover:bg-slate-700 rounded-lg transition" title="読み上げ速度の調整">
-                    <i class="fa-solid fa-sliders text-base sm:text-lg"></i>
+                    <i class="fa-solid fa-sliders text-lg"></i>
                 </button>
             </div>
         </div>
@@ -41,10 +42,11 @@
     <main class="max-w-4xl mx-auto w-full flex-1 p-3 flex flex-col gap-4">
         <div class="bg-slate-800 rounded-xl p-3 sm:p-4 border border-slate-700 shadow-lg space-y-3">
             
+            <!-- 変更点: 文字サイズをtext-base(16px)に大きくし、スマホでの見やすさを向上 -->
             <div class="flex items-center justify-between gap-2 bg-slate-900/60 p-2 sm:p-3 rounded-lg border border-slate-700/50">
                 <div class="flex-1">
-                    <label class="block text-[10px] text-emerald-400 uppercase tracking-wider mb-1 font-bold">あなた (Lang 1)</label>
-                    <select id="lang1" onchange="onLangChange()" class="w-full bg-slate-800 text-sm font-medium rounded-md px-1 py-2 border border-slate-600 focus:outline-none focus:border-emerald-500">
+                    <label class="block text-xs text-emerald-400 uppercase tracking-wider mb-1 font-bold">あなた (Lang 1)</label>
+                    <select id="lang1" onchange="onLangChange()" class="w-full bg-slate-800 text-base font-medium rounded-md px-1 py-2 border border-slate-600 focus:outline-none focus:border-emerald-500">
                         <option value="ja-JP" selected>🇯🇵 日本語</option>
                         <option value="en-US">🇺🇸 英語</option>
                         <option value="ko-KR">🇰🇷 韓国語</option>
@@ -52,11 +54,11 @@
                     </select>
                 </div>
                 <div class="text-slate-500 pt-4 px-1">
-                    <i class="fa-solid fa-comments text-lg sm:text-xl"></i>
+                    <i class="fa-solid fa-comments text-xl"></i>
                 </div>
                 <div class="flex-1">
-                    <label class="block text-[10px] text-blue-400 uppercase tracking-wider mb-1 font-bold">相手 (Lang 2)</label>
-                    <select id="lang2" onchange="onLangChange()" class="w-full bg-slate-800 text-sm font-medium rounded-md px-1 py-2 border border-slate-600 focus:outline-none focus:border-blue-500">
+                    <label class="block text-xs text-blue-400 uppercase tracking-wider mb-1 font-bold">相手 (Lang 2)</label>
+                    <select id="lang2" onchange="onLangChange()" class="w-full bg-slate-800 text-base font-medium rounded-md px-1 py-2 border border-slate-600 focus:outline-none focus:border-blue-500">
                         <option value="en-US" selected>🇺🇸 英語</option>
                         <option value="ja-JP">🇯🇵 日本語</option>
                         <option value="ko-KR">🇰🇷 韓国語</option>
@@ -65,34 +67,35 @@
                 </div>
             </div>
 
-            <!-- 2つの大きなマイクボタン -->
+            <!-- 変更点: マイクアイコンと文字を一回り大きく調整 -->
             <div class="flex gap-2 sm:gap-3 mt-1">
-                <button id="micBtn1" onclick="toggleListening(1)" class="w-1/2 py-5 sm:py-6 px-2 rounded-xl font-bold flex flex-col items-center justify-center gap-2 bg-slate-700 hover:bg-emerald-600 text-white shadow-lg transition active:scale-95 border-2 border-emerald-600/30">
-                    <i class="fa-solid fa-microphone text-3xl sm:text-4xl" id="micIcon1"></i>
-                    <span id="micText1" class="text-sm sm:text-base">日本語を話す</span>
+                <button id="micBtn1" onclick="toggleListening(1)" class="w-1/2 py-6 sm:py-8 px-2 rounded-xl font-bold flex flex-col items-center justify-center gap-2 bg-slate-700 hover:bg-emerald-600 text-white shadow-lg transition active:scale-95 border-2 border-emerald-600/30">
+                    <i class="fa-solid fa-microphone text-4xl sm:text-5xl" id="micIcon1"></i>
+                    <span id="micText1" class="text-base sm:text-lg">日本語を話す</span>
                 </button>
-                <button id="micBtn2" onclick="toggleListening(2)" class="w-1/2 py-5 sm:py-6 px-2 rounded-xl font-bold flex flex-col items-center justify-center gap-2 bg-slate-700 hover:bg-blue-600 text-white shadow-lg transition active:scale-95 border-2 border-blue-600/30">
-                    <i class="fa-solid fa-microphone text-3xl sm:text-4xl" id="micIcon2"></i>
-                    <span id="micText2" class="text-sm sm:text-base">英語を話す</span>
+                <button id="micBtn2" onclick="toggleListening(2)" class="w-1/2 py-6 sm:py-8 px-2 rounded-xl font-bold flex flex-col items-center justify-center gap-2 bg-slate-700 hover:bg-blue-600 text-white shadow-lg transition active:scale-95 border-2 border-blue-600/30">
+                    <i class="fa-solid fa-microphone text-4xl sm:text-5xl" id="micIcon2"></i>
+                    <span id="micText2" class="text-base sm:text-lg">英語を話す</span>
                 </button>
             </div>
 
+            <!-- 変更点: 入力欄の文字サイズをtext-baseに変更（iPhoneの自動ズーム防止にも効果あり） -->
             <div id="manualInputContainer" class="flex items-center gap-2 pt-2 border-t border-slate-700/50 mt-1">
-                <input type="text" id="manualTextInput" placeholder="テキストを入力して翻訳..." class="flex-1 bg-slate-900 border border-slate-600 rounded-lg px-3 py-2.5 text-sm text-slate-100 focus:outline-none focus:border-emerald-500 placeholder-slate-500 transition shadow-inner">
+                <input type="text" id="manualTextInput" placeholder="テキストを入力して翻訳..." class="flex-1 bg-slate-900 border border-slate-600 rounded-lg px-3 py-2.5 text-base text-slate-100 focus:outline-none focus:border-emerald-500 placeholder-slate-500 transition shadow-inner">
                 <button onclick="translateManualText()" class="py-2.5 px-4 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white font-semibold transition flex items-center justify-center shadow-md">
-                    <i class="fa-solid fa-paper-plane"></i>
+                    <i class="fa-solid fa-paper-plane text-lg"></i>
                 </button>
             </div>
 
-            <div id="liveBox" class="hidden bg-slate-900/80 rounded-lg p-3 border border-emerald-500/30 text-sm space-y-1">
-                <div class="flex items-center gap-2 text-xs text-emerald-400 font-medium">
-                    <span class="relative flex h-2 w-2">
+            <div id="liveBox" class="hidden bg-slate-900/80 rounded-lg p-3 border border-emerald-500/30 text-base space-y-1">
+                <div class="flex items-center gap-2 text-sm text-emerald-400 font-medium">
+                    <span class="relative flex h-2.5 w-2.5">
                       <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                      <span class="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                      <span class="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
                     </span>
                     <span id="liveStatusText">音声を認識中...</span>
                 </div>
-                <p id="liveText" class="text-slate-300 italic min-h-[1.25rem]"></p>
+                <p id="liveText" class="text-slate-300 italic min-h-[1.5rem]"></p>
             </div>
         </div>
 
@@ -100,11 +103,11 @@
             <h2 class="text-sm font-semibold text-slate-400 uppercase tracking-wider flex items-center gap-2">
                 <i class="fa-solid fa-clock-rotate-left"></i> 対話履歴
             </h2>
-            <div class="flex gap-4">
-                <button onclick="downloadHistory()" class="text-xs text-emerald-500 hover:text-emerald-400 transition flex items-center gap-1 bg-slate-800 px-2 py-1 rounded">
+            <div class="flex gap-3 sm:gap-4">
+                <button onclick="downloadHistory()" class="text-sm text-emerald-500 hover:text-emerald-400 transition flex items-center gap-1.5 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700 shadow-sm">
                     <i class="fa-solid fa-download"></i> 保存
                 </button>
-                <button id="clearBtn" onclick="clearTranscripts(this)" class="text-xs text-slate-400 hover:text-red-400 transition flex items-center gap-1 bg-slate-800 px-2 py-1 rounded">
+                <button id="clearBtn" onclick="clearTranscripts(this)" class="text-sm text-slate-400 hover:text-red-400 transition flex items-center gap-1.5 bg-slate-800 px-3 py-1.5 rounded-lg border border-slate-700 shadow-sm">
                     <i class="fa-solid fa-trash"></i> 全消去
                 </button>
             </div>
@@ -121,18 +124,18 @@
                 <h3 class="font-bold text-lg flex items-center gap-2">
                     <i class="fa-solid fa-sliders text-emerald-400"></i> 設定
                 </h3>
-                <button onclick="closeSettings()" class="text-slate-400 hover:text-white text-lg">
+                <button onclick="closeSettings()" class="text-slate-400 hover:text-white text-xl p-1">
                     <i class="fa-solid fa-xmark"></i>
                 </button>
             </div>
             <div class="space-y-3">
                 <div>
-                    <label class="block text-sm font-medium text-slate-300 mb-2">音声読み上げ速度: <span id="speedVal" class="text-emerald-400 font-bold">1.0</span>x</label>
-                    <input type="range" id="ttsSpeed" min="0.7" max="1.5" step="0.1" value="1.0" oninput="document.getElementById('speedVal').innerText=this.value" class="w-full accent-emerald-500">
+                    <label class="block text-base font-medium text-slate-300 mb-2">音声読み上げ速度: <span id="speedVal" class="text-emerald-400 font-bold">1.0</span>x</label>
+                    <input type="range" id="ttsSpeed" min="0.7" max="1.5" step="0.1" value="1.0" oninput="document.getElementById('speedVal').innerText=this.value" class="w-full accent-emerald-500 h-2 bg-slate-600 rounded-lg appearance-none">
                 </div>
             </div>
             <div class="flex justify-end pt-2">
-                <button onclick="saveSettings()" class="px-5 py-2.5 rounded-lg text-sm bg-emerald-600 hover:bg-emerald-500 text-white font-semibold w-full">設定を閉じる</button>
+                <button onclick="saveSettings()" class="px-5 py-3 rounded-lg text-base bg-emerald-600 hover:bg-emerald-500 text-white font-semibold w-full shadow-md">設定を閉じる</button>
             </div>
         </div>
     </div>
@@ -202,6 +205,7 @@
             };
 
             recognition.onerror = (e) => {
+                // 無音や強制終了の時はエラーを出さない
                 if (e.error === 'aborted' || e.error === 'no-speech') return; 
                 console.error('Speech recognition error:', e.error);
                 if (e.error === 'not-allowed') resetListeningUI();
@@ -277,7 +281,7 @@
             activeSpeaker = 0;
             wasListeningBeforeSpeak = false;
             if (recognition && isListening) {
-                try { recognition.stop(); } catch(e) {}
+                try { recognition.abort(); } catch(e) {}
             }
             resetListeningUI();
         }
@@ -286,25 +290,25 @@
             const btn1 = document.getElementById('micBtn1');
             const btn2 = document.getElementById('micBtn2');
             
-            btn1.className = 'w-1/2 py-5 sm:py-6 px-2 rounded-xl font-bold flex flex-col items-center justify-center gap-2 bg-slate-700 hover:bg-emerald-600 text-white shadow-lg transition active:scale-95 border-2 border-emerald-600/30';
-            btn2.className = 'w-1/2 py-5 sm:py-6 px-2 rounded-xl font-bold flex flex-col items-center justify-center gap-2 bg-slate-700 hover:bg-blue-600 text-white shadow-lg transition active:scale-95 border-2 border-blue-600/30';
+            btn1.className = 'w-1/2 py-6 sm:py-8 px-2 rounded-xl font-bold flex flex-col items-center justify-center gap-2 bg-slate-700 hover:bg-emerald-600 text-white shadow-lg transition active:scale-95 border-2 border-emerald-600/30';
+            btn2.className = 'w-1/2 py-6 sm:py-8 px-2 rounded-xl font-bold flex flex-col items-center justify-center gap-2 bg-slate-700 hover:bg-blue-600 text-white shadow-lg transition active:scale-95 border-2 border-blue-600/30';
             
             const name1 = LANG_MAP[document.getElementById('lang1').value].name;
             const name2 = LANG_MAP[document.getElementById('lang2').value].name;
 
-            document.getElementById('micIcon1').className = 'fa-solid fa-microphone text-3xl sm:text-4xl';
-            document.getElementById('micIcon2').className = 'fa-solid fa-microphone text-3xl sm:text-4xl';
+            document.getElementById('micIcon1').className = 'fa-solid fa-microphone text-4xl sm:text-5xl';
+            document.getElementById('micIcon2').className = 'fa-solid fa-microphone text-4xl sm:text-5xl';
             document.getElementById('micText1').innerText = name1 + 'を話す';
             document.getElementById('micText2').innerText = name2 + 'を話す';
 
             if (activeSpeaker === 1) {
-                btn1.className = 'w-1/2 py-5 sm:py-6 px-2 rounded-xl font-bold flex flex-col items-center justify-center gap-2 bg-red-600 text-white shadow-lg transition animate-pulse border-2 border-red-400';
-                document.getElementById('micIcon1').className = 'fa-solid fa-ear-listen text-3xl sm:text-4xl';
+                btn1.className = 'w-1/2 py-6 sm:py-8 px-2 rounded-xl font-bold flex flex-col items-center justify-center gap-2 bg-red-600 text-white shadow-lg transition animate-pulse border-2 border-red-400';
+                document.getElementById('micIcon1').className = 'fa-solid fa-ear-listen text-4xl sm:text-5xl';
                 document.getElementById('micText1').innerText = '停止 (タップ)';
                 document.getElementById('liveStatusText').innerText = name1 + 'を聞き取り中...';
             } else if (activeSpeaker === 2) {
-                btn2.className = 'w-1/2 py-5 sm:py-6 px-2 rounded-xl font-bold flex flex-col items-center justify-center gap-2 bg-red-600 text-white shadow-lg transition animate-pulse border-2 border-red-400';
-                document.getElementById('micIcon2').className = 'fa-solid fa-ear-listen text-3xl sm:text-4xl';
+                btn2.className = 'w-1/2 py-6 sm:py-8 px-2 rounded-xl font-bold flex flex-col items-center justify-center gap-2 bg-red-600 text-white shadow-lg transition animate-pulse border-2 border-red-400';
+                document.getElementById('micIcon2').className = 'fa-solid fa-ear-listen text-4xl sm:text-5xl';
                 document.getElementById('micText2').innerText = '停止 (タップ)';
                 document.getElementById('liveStatusText').innerText = name2 + 'を聞き取り中...';
             }
@@ -326,7 +330,7 @@
                 translated: '[翻訳取得中...]',
                 loading: true,
                 speaker: speakerId,
-                isEditing: false // 編集モードのフラグ
+                isEditing: false
             };
 
             transcripts.unshift(item);
@@ -398,7 +402,7 @@
 
         function saveTranscriptsToStorage() {
             try {
-                const itemsToSave = transcripts.slice(0, 100); // 100件まで保存
+                const itemsToSave = transcripts.slice(0, 100);
                 localStorage.setItem(STORAGE_KEY, JSON.stringify(itemsToSave));
             } catch (e) {
                 console.error('Failed to save history', e);
@@ -411,7 +415,6 @@
                 if (storedData) {
                     const parsedData = JSON.parse(storedData);
                     if (Array.isArray(parsedData)) {
-                        // ロード時に編集モードフラグをリセット
                         transcripts = parsedData.map(t => ({...t, isEditing: false}));
                     }
                 }
@@ -428,13 +431,16 @@
                 renderTranscripts();
                 btn.innerHTML = '<i class="fa-solid fa-trash"></i> 全消去';
                 btn.classList.remove('text-red-400', 'font-bold');
+                btn.classList.add('text-slate-400');
             } else {
                 btn.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> 本当に消去？';
+                btn.classList.remove('text-slate-400');
                 btn.classList.add('text-red-400', 'font-bold');
                 clearTimeout(confirmClearTimeout);
                 confirmClearTimeout = setTimeout(() => {
                     btn.innerHTML = '<i class="fa-solid fa-trash"></i> 全消去';
                     btn.classList.remove('text-red-400', 'font-bold');
+                    btn.classList.add('text-slate-400');
                 }, 3000);
             }
         }
@@ -451,7 +457,6 @@
                 return;
             }
             let textContent = "--- 翻訳履歴バックアップ ---\n\n";
-            // 古い順に出力するためにリバース
             [...transcripts].reverse().forEach(item => {
                 const speaker = item.speaker === 1 ? "あなた" : "相手";
                 textContent += `[${item.timestamp}] ${speaker}\n`;
@@ -459,7 +464,11 @@
                 textContent += `翻訳: ${item.translated}\n`;
                 textContent += `------------------------\n\n`;
             });
-            const blob = new Blob([textContent], { type: 'text/plain;charset=utf-8' });
+            
+            // 変更点: スマホのメモ帳等での文字化けを防ぐために、BOM（Byte Order Mark）を先頭に付与します
+            const bom = new Uint8Array([0xEF, 0xBB, 0xBF]);
+            const blob = new Blob([bom, textContent], { type: 'text/plain;charset=utf-8' });
+            
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             const dateStr = new Date().toISOString().slice(0,10).replace(/-/g,'');
@@ -496,7 +505,7 @@
                     item.loading = true;
                     item.translated = '[再翻訳中...]';
                     renderTranscripts();
-                    executeTranslationApi(item); // 再翻訳実行
+                    executeTranslationApi(item); 
                 } else {
                     item.isEditing = false;
                     renderTranscripts();
@@ -509,8 +518,8 @@
             if (transcripts.length === 0) {
                 container.innerHTML = `
                     <div class="bg-slate-800/40 border border-dashed border-slate-700 rounded-xl p-8 text-center text-slate-500 mt-4">
-                        <i class="fa-solid fa-comments text-4xl mb-3 block opacity-50"></i>
-                        <p class="text-sm">ボタンを押して話し始めてください</p>
+                        <i class="fa-solid fa-comments text-5xl mb-3 block opacity-50"></i>
+                        <p class="text-base">ボタンを押して話し始めてください</p>
                     </div>`;
                 return;
             }
@@ -523,43 +532,43 @@
 
                 return `
                 <div class="bg-slate-800 rounded-xl p-4 border ${borderColor} shadow-md transition relative overflow-hidden">
-                    <div class="absolute top-0 left-0 w-1 h-full ${isYou ? 'bg-emerald-500' : 'bg-blue-500'} opacity-50"></div>
+                    <div class="absolute top-0 left-0 w-1.5 h-full ${isYou ? 'bg-emerald-500' : 'bg-blue-500'} opacity-60"></div>
 
                     <div class="flex justify-between items-center text-xs text-slate-400 border-b border-slate-700/50 pb-2 mb-2 ml-2">
                         <span class="flex items-center gap-1.5 font-medium">
-                            <span class="${labelColor} font-bold mr-1">${labelText}</span>
-                            <span>${LANG_MAP[item.srcLang]?.flag || ''}</span>
+                            <span class="${labelColor} font-bold mr-1 text-sm">${labelText}</span>
+                            <span class="text-sm">${LANG_MAP[item.srcLang]?.flag || ''}</span>
                             <i class="fa-solid fa-arrow-right text-[10px] text-slate-500"></i>
-                            <span>${LANG_MAP[item.tgtLang]?.flag || ''}</span>
+                            <span class="text-sm">${LANG_MAP[item.tgtLang]?.flag || ''}</span>
                         </span>
-                        <div class="flex items-center gap-3">
-                            <span>${item.timestamp}</span>
-                            <button onclick="deleteTranscript(${item.id})" class="text-slate-500 hover:text-red-400 transition" title="この履歴を削除">
+                        <div class="flex items-center gap-4">
+                            <span class="text-sm">${item.timestamp}</span>
+                            <button onclick="deleteTranscript(${item.id})" class="text-slate-500 hover:text-red-400 transition p-1" title="この履歴を削除">
                                 <i class="fa-solid fa-xmark text-lg"></i>
                             </button>
                         </div>
                     </div>
 
                     <div class="space-y-2 ml-2">
-                        <!-- 原文表示・編集エリア -->
-                        <div class="text-xs text-slate-400 flex flex-wrap items-start justify-between gap-2">
+                        <!-- 変更点: 原文と翻訳文の文字サイズを text-base に大きくしました -->
+                        <div class="text-base text-slate-300 flex flex-wrap items-start justify-between gap-2">
                             ${item.isEditing ? `
                                 <div class="flex items-center gap-2 w-full mt-1">
-                                    <input type="text" id="edit-input-${item.id}" value="${escapeHtml(item.original)}" class="flex-1 bg-slate-900 border border-slate-600 rounded px-2 py-1.5 text-sm text-slate-100 focus:outline-none focus:border-emerald-500">
-                                    <button onclick="saveAndRetranslate(${item.id})" class="text-xs bg-emerald-600 hover:bg-emerald-500 text-white px-2 py-1.5 rounded transition shadow">
+                                    <input type="text" id="edit-input-${item.id}" value="${escapeHtml(item.original)}" class="flex-1 bg-slate-900 border border-slate-600 rounded px-2 py-2 text-base text-slate-100 focus:outline-none focus:border-emerald-500">
+                                    <button onclick="saveAndRetranslate(${item.id})" class="text-sm bg-emerald-600 hover:bg-emerald-500 text-white px-3 py-2 rounded-lg transition shadow">
                                         <i class="fa-solid fa-check"></i> 再翻訳
                                     </button>
-                                    <button onclick="cancelEdit(${item.id})" class="text-xs bg-slate-600 hover:bg-slate-500 text-white px-2 py-1.5 rounded transition shadow">
-                                        キャンセル
+                                    <button onclick="cancelEdit(${item.id})" class="text-sm bg-slate-600 hover:bg-slate-500 text-white px-3 py-2 rounded-lg transition shadow">
+                                        取消
                                     </button>
                                 </div>
                             ` : `
-                                <p class="leading-relaxed flex-1 pt-1 text-sm">${escapeHtml(item.original)}</p>
-                                <div class="flex gap-1 shrink-0">
-                                    <button onclick="editTranscript(${item.id})" class="text-slate-500 hover:text-emerald-400 p-1.5 transition" title="文章を修正して再翻訳">
+                                <p class="leading-relaxed flex-1 pt-1">${escapeHtml(item.original)}</p>
+                                <div class="flex gap-2 shrink-0">
+                                    <button onclick="editTranscript(${item.id})" class="text-slate-500 hover:text-emerald-400 p-2 bg-slate-900/40 rounded-lg transition" title="文章を修正して再翻訳">
                                         <i class="fa-solid fa-pen-to-square"></i>
                                     </button>
-                                    <button onclick="speakText('${escapeQuotes(item.original)}', '${item.srcLang}')" class="text-slate-500 hover:text-slate-300 p-1.5 transition" title="原文読み上げ">
+                                    <button onclick="speakText('${escapeQuotes(item.original)}', '${item.srcLang}')" class="text-slate-500 hover:text-slate-300 p-2 bg-slate-900/40 rounded-lg transition" title="原文読み上げ">
                                         <i class="fa-solid fa-volume-low"></i>
                                     </button>
                                 </div>
@@ -567,13 +576,13 @@
                         </div>
 
                         <!-- 翻訳結果エリア -->
-                        <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-700/50 flex items-start justify-between gap-3">
-                            <p class="text-sm font-medium ${item.loading ? 'text-emerald-400 animate-pulse' : 'text-slate-100'} leading-relaxed">
+                        <div class="bg-slate-900/60 p-3 sm:p-4 rounded-lg border border-slate-700/50 flex items-start justify-between gap-3 mt-2">
+                            <p class="text-base sm:text-lg font-medium ${item.loading ? 'text-emerald-400 animate-pulse' : 'text-slate-100'} leading-relaxed">
                                 ${escapeHtml(item.translated)}
                             </p>
                             ${!item.loading && !item.translated.startsWith('⚠️') ? `
-                                <button onclick="speakText('${escapeQuotes(item.translated)}', '${item.tgtLang}')" class="bg-slate-700 hover:bg-slate-600 text-white p-2 rounded-lg transition shrink-0" title="読み上げ">
-                                    <i class="fa-solid fa-volume-high"></i>
+                                <button onclick="speakText('${escapeQuotes(item.translated)}', '${item.tgtLang}')" class="bg-slate-700 hover:bg-slate-600 text-white p-2.5 rounded-lg transition shrink-0" title="読み上げ">
+                                    <i class="fa-solid fa-volume-high text-lg"></i>
                                 </button>
                             ` : ''}
                         </div>
@@ -599,9 +608,9 @@
                     }
                     const activeBtn = document.getElementById(`micBtn${activeSpeaker}`);
                     if(activeBtn) {
-                        activeBtn.className = 'w-1/2 py-5 sm:py-6 px-2 rounded-xl font-bold flex flex-col items-center justify-center gap-2 bg-amber-600 text-white shadow-lg transition border-2 border-amber-400';
+                        activeBtn.className = 'w-1/2 py-6 sm:py-8 px-2 rounded-xl font-bold flex flex-col items-center justify-center gap-2 bg-amber-600 text-white shadow-lg transition border-2 border-amber-400';
                         document.getElementById(`micText${activeSpeaker}`).innerText = '読み上げ中';
-                        document.getElementById(`micIcon${activeSpeaker}`).className = 'fa-solid fa-volume-high animate-pulse text-3xl sm:text-4xl';
+                        document.getElementById(`micIcon${activeSpeaker}`).className = 'fa-solid fa-volume-high animate-pulse text-4xl sm:text-5xl';
                     }
                 }
             };
@@ -614,7 +623,7 @@
                         updateListeningUI();
                         if (recognition) {
                             setTimeout(() => {
-                                if(activeSpeaker !== 0) {
+                                if(activeSpeaker !== 0 && !isSpeaking) {
                                     try { recognition.start(); } catch(e) {}
                                 }
                             }, 300); 
@@ -632,10 +641,10 @@
             const btn = document.getElementById('ttsToggle');
             const text = document.getElementById('ttsStatusText');
             if (autoTTS) {
-                btn.className = 'px-2 sm:px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-500 transition flex items-center gap-1 sm:gap-1.5 shadow';
+                btn.className = 'px-2 sm:px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-600 text-white hover:bg-emerald-500 transition flex items-center gap-1 sm:gap-1.5 shadow';
                 text.innerHTML = '<span class="hidden sm:inline">自動再生: </span>ON';
             } else {
-                btn.className = 'px-2 sm:px-3 py-1.5 rounded-full text-[10px] sm:text-xs font-semibold bg-slate-700 text-slate-300 hover:bg-slate-600 border border-slate-600 transition flex items-center gap-1 sm:gap-1.5';
+                btn.className = 'px-2 sm:px-3 py-1.5 rounded-full text-xs font-semibold bg-slate-700 text-slate-300 hover:bg-slate-600 border border-slate-600 transition flex items-center gap-1 sm:gap-1.5';
                 text.innerHTML = '<span class="hidden sm:inline">自動再生: </span>OFF';
             }
         }
